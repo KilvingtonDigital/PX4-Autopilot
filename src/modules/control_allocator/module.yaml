@@ -34,6 +34,7 @@ parameters:
                 13: Rover (Mecanum)
                 14: Spacecraft 2D
                 15: Spacecraft 3D
+                100: Helicopter (Dual side-by-side)
             default: 0
 
         CA_METHOD:
@@ -478,6 +479,69 @@ parameters:
             min: 0
             max: 10
             default: 1.0
+        CA_SP1_ANG${i}:
+            description:
+                short: Angle for swash plate servo ${i} (right head, dual helicopter)
+                long: |
+                  Only used by the dual side-by-side helicopter airframe (right rotor head).
+                  The angle is measured clockwise (as seen from top), with 0 pointing forwards (X axis).
+            type: float
+            decimal: 0
+            increment: 10
+            unit: deg
+            num_instances: 3
+            min: 0
+            max: 360
+            default: [90, 210, 330]
+        CA_SP1_ARM_L${i}:
+            description:
+                short: Arm length for swash plate servo ${i} (right head, dual helicopter)
+                long: |
+                  This is relative to the other arm lengths.
+            type: float
+            decimal: 3
+            increment: 0.1
+            num_instances: 3
+            min: 0
+            max: 10
+            default: 1.0
+        CA_SP1_TRIM${i}:
+            description:
+                short: Trim for swash plate servo ${i} (right head, dual helicopter)
+                long: |
+                  The left head uses CA_SV_CS0_TRIM to CA_SV_CS2_TRIM.
+            type: float
+            decimal: 3
+            increment: 0.01
+            num_instances: 3
+            min: -1
+            max: 1
+            default: 0.0
+        CA_HELI2_ROLL_K:
+            description:
+                short: Dual helicopter roll gain (differential collective)
+                long: |
+                  Collective added to the left head and removed from the right head per unit roll demand.
+                  The sign must be confirmed on the bench: a positive roll demand should raise the left swash plate and lower the right.
+            type: float
+            decimal: 3
+            increment: 0.05
+            min: -2
+            max: 2
+            default: 0.0
+        CA_HELI2_YAW_K:
+            description:
+                short: Dual helicopter yaw gain (opposite fore-aft cyclic)
+                long: |
+                  Fore-aft cyclic removed from the left head and added to the right head per unit yaw demand.
+                  A positive yaw demand (nose right) should tilt the left head thrust forward and the right head thrust aft.
+                  The sign must be confirmed on the bench.
+            type: float
+            decimal: 3
+            increment: 0.05
+            min: -2
+            max: 2
+            default: 0.0
         CA_HELI_THR_C${i}:
             description:
                 short: Throttle curve at position ${i}
@@ -1261,6 +1325,40 @@ mixer:
                       - label: 'Throttle spoolup time'
                         name: COM_SPOOLUP_TIME
 
+            100: # Helicopter (Dual side-by-side)
+                actuators:
+                  - actuator_type: 'motor'
+                    count: 2
+                    item_label_prefix: ['Left Rotor', 'Right Rotor']
+                  - actuator_type: 'servo'
+                    group_label: 'Left swash plate servos'
+                    count: 3
+                    per_item_parameters:
+                        extra:
+                          - name: 'CA_SP0_ANG${i}'
+                            label: 'Angle'
+                          - name: 'CA_SP0_ARM_L${i}'
+                            label: 'Arm Length (relative)'
+                          - name: 'CA_SV_CS${i}_TRIM'
+                            label: 'Trim'
+                  - actuator_type: 'servo'
+                    group_label: 'Right swash plate servos'
+                    count: 3
+                    per_item_parameters:
+                        extra:
+                          - name: 'CA_SP1_ANG${i}'
+                            label: 'Angle'
+                          - name: 'CA_SP1_ARM_L${i}'
+                            label: 'Arm Length (relative)'
+                          - name: 'CA_SP1_TRIM${i}'
+                            label: 'Trim'
+                    parameters:
+                      - label: 'Roll gain (differential collective)'
+                        name: CA_HELI2_ROLL_K
+                      - label: 'Yaw gain (opposite fore-aft cyclic)'
+                        name: CA_HELI2_YAW_K
+                      - label: 'Throttle spoolup time'
+                        name: COM_SPOOLUP_TIME
             13: # Rover (Mecanum)
                 title: 'Rover (Mecanum)'
                 actuators:
